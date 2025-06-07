@@ -1,170 +1,211 @@
-import { useState } from "react";
-import "./App.css";
+import React, { useState } from 'react';
+import './App.css';
 
-export default function App() {
-  const [formData, setFormData] = useState({
-    firstName: "",
-    lastName: "",
-    username: "",
-    email: "",
-    password: "",
+function RegistrationForm() {
+  const [form, setForm] = useState({
+    firstName: '',
+    lastName: '',
+    username: '',
+    email: '',
+    password: '',
     showPassword: false,
-    phone: "",
-    countryCode: "+91",
-    country: "",
-    city: "",
-    pan: "",
-    aadhar: "",
+    phone: '',
+    countryCode: '+91',
+    country: '',
+    city: '',
+    pan: '',
+    aadhar: ''
   });
 
   const [errors, setErrors] = useState({});
   const [submitted, setSubmitted] = useState(false);
 
-  const countries = ["India", "USA", "UK"];
-  const cities = {
-    India: ["Delhi", "Mumbai", "Bangalore"],
-    USA: ["New York", "Los Angeles"],
-    UK: ["London", "Manchester"],
+  const countryList = ['India', 'USA', 'UK', 'Canada'];
+  const citiesByCountry = {
+    India: ['Mumbai', 'Delhi', 'Bangalore'],
+    USA: ['New York', 'Los Angeles', 'Chicago'],
+    UK: ['London', 'Manchester', 'Birmingham'],
+    Canada: ['Toronto', 'Vancouver', 'Montreal']
   };
 
-  const handleChange = (e) => {
+  const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setFormData((prev) => ({
+    setForm(prev => ({
       ...prev,
-      [name]: type === "checkbox" ? checked : value,
+      [name]: type === 'checkbox' ? checked : value
     }));
   };
 
-  const validate = () => {
-    const err = {};
-    if (!formData.firstName.trim()) err.firstName = "First name is required";
-    if (!formData.lastName.trim()) err.lastName = "Last name is required";
-    if (!formData.username.trim()) err.username = "Username is required";
-    if (!formData.email.includes("@")) err.email = "Invalid email";
-    if (formData.password.length < 6) err.password = "Min 6 chars";
-    if (!formData.countryCode || !formData.phone) err.phone = "Phone required";
-    if (!formData.country) err.country = "Select a country";
-    if (!formData.city) err.city = "Select a city";
-    if (formData.pan.length !== 10) err.pan = "PAN must be 10 characters";
-    if (formData.aadhar.length !== 12) err.aadhar = "Aadhar must be 12 digits";
-    setErrors(err);
-    return Object.keys(err).length === 0;
+  const validateForm = () => {
+    const newErrors = {};
+
+    if (!form.firstName.trim()) newErrors.firstName = 'First name is required';
+    if (!form.lastName.trim()) newErrors.lastName = 'Last name is required';
+    if (!form.username.trim()) newErrors.username = 'Username is required';
+    if (!/^\S+@\S+\.\S+$/.test(form.email)) newErrors.email = 'Enter a valid email';
+    if (form.password.length < 6) newErrors.password = 'Password must be at least 6 characters';
+    if (!/^\d{10}$/.test(form.phone)) newErrors.phone = 'Phone must be 10 digits';
+    if (!form.country) newErrors.country = 'Select a country';
+    if (!form.city) newErrors.city = 'Select a city';
+    if (!/^[A-Z]{5}\d{4}[A-Z]$/.test(form.pan)) newErrors.pan = 'PAN format invalid (e.g. ABCDE1234F)';
+    if (!/^\d{12}$/.test(form.aadhar)) newErrors.aadhar = 'Aadhar must be 12 digits';
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (validate()) {
+    if (validateForm()) {
       setSubmitted(true);
     }
   };
 
+  const renderFieldValue = (key, value) => {
+    const label = key
+      .replace(/([A-Z])/g, ' $1')
+      .replace(/^./, str => str.toUpperCase());
+    return (
+      <div key={key} className="data-row">
+        <span className="field-name">{label}</span>
+        <span className="field-value">{value || 'Not provided'}</span>
+      </div>
+    );
+  };
+
   if (submitted) {
     return (
-      <div className="success fade-in">
-        <h2>🎉 Form Submitted Successfully!</h2>
-        <div className="result-box">
-          {Object.entries(formData).map(
-            ([key, value]) =>
-              key !== "showPassword" && (
-                <p key={key}>
-                  <strong>{key.charAt(0).toUpperCase() + key.slice(1)}:</strong> {value}
-                </p>
-              )
-          )}
+      <div className="success-container">
+        <div className="success-card">
+          <h2>Registration Successful</h2>
+          <div className="data-display">
+            {Object.entries(form).map(([key, value]) => (
+              key !== 'showPassword' && renderFieldValue(key, value)
+            ))}
+          </div>
+          <button onClick={() => setSubmitted(false)} className="return-button">
+            Register Another User
+          </button>
         </div>
-        <button onClick={() => setSubmitted(false)}>New Registration</button>
       </div>
     );
   }
 
   return (
     <div className="form-container">
-      <h2>Registration Form</h2>
-      <form onSubmit={handleSubmit}>
-        <label>First Name</label>
-        <input name="firstName" value={formData.firstName} onChange={handleChange} required />
-        {errors.firstName && <span className="error">{errors.firstName}</span>}
+      <div className="form-card">
+        <header className="form-header">
+          <h1>User Registration</h1>
+          <p>Please complete all required fields</p>
+        </header>
 
-        <label>Last Name</label>
-        <input name="lastName" value={formData.lastName} onChange={handleChange} required />
-        {errors.lastName && <span className="error">{errors.lastName}</span>}
+        <form onSubmit={handleSubmit}>
+          <div className="input-row">
+            {["firstName", "lastName"].map(field => (
+              <div key={field} className={`input-group ${errors[field] ? 'has-error' : ''}`}>
+                <label>{field === 'firstName' ? 'First Name' : 'Last Name'}</label>
+                <input type="text" name={field} value={form[field]} onChange={handleInputChange} />
+                {errors[field] && <span className="error-text">{errors[field]}</span>}
+              </div>
+            ))}
+          </div>
 
-        <label>Username</label>
-        <input name="username" value={formData.username} onChange={handleChange} required />
-        {errors.username && <span className="error">{errors.username}</span>}
-
-        <label>Email</label>
-        <input name="email" type="email" value={formData.email} onChange={handleChange} required />
-        {errors.email && <span className="error">{errors.email}</span>}
-
-        <label>Password</label>
-        <div className="password-container">
-          <input
-            name="password"
-            type={formData.showPassword ? "text" : "password"}
-            value={formData.password}
-            onChange={handleChange}
-            required
-          />
-        </div>
-        <div className="password-checkbox">
-          <input
-            type="checkbox"
-            name="showPassword"
-            checked={formData.showPassword}
-            onChange={handleChange}
-          />
-          <label>Show</label>
-        </div>
-        {errors.password && <span className="error">{errors.password}</span>}
-
-        <label>Phone No.</label>
-        <div className="phone-container">
-          <input
-            name="countryCode"
-            value={formData.countryCode}
-            onChange={handleChange}
-            placeholder="+91"
-            required
-          />
-          <input
-            name="phone"
-            value={formData.phone}
-            onChange={handleChange}
-            placeholder="Phone Number"
-            required
-          />
-        </div>
-        {errors.phone && <span className="error">{errors.phone}</span>}
-
-        <label>Country</label>
-        <select name="country" value={formData.country} onChange={handleChange} required>
-          <option value="">--Select--</option>
-          {countries.map((c) => (
-            <option key={c} value={c}>{c}</option>
+          {["username", "email"].map(field => (
+            <div key={field} className={`input-group ${errors[field] ? 'has-error' : ''}`}>
+              <label>{field.charAt(0).toUpperCase() + field.slice(1)}</label>
+              <input type={field === 'email' ? 'email' : 'text'} name={field} value={form[field]} onChange={handleInputChange} />
+              {errors[field] && <span className="error-text">{errors[field]}</span>}
+            </div>
           ))}
-        </select>
-        {errors.country && <span className="error">{errors.country}</span>}
 
-        <label>City</label>
-        <select name="city" value={formData.city} onChange={handleChange} required>
-          <option value="">--Select--</option>
-          {(cities[formData.country] || []).map((ct) => (
-            <option key={ct} value={ct}>{ct}</option>
-          ))}
-        </select>
-        {errors.city && <span className="error">{errors.city}</span>}
+          <div className={`input-group ${errors.password ? 'has-error' : ''}`}>
+            <label>Password</label>
+            <div className="password-wrapper">
+              <input
+                type={form.showPassword ? 'text' : 'password'}
+                name="password"
+                value={form.password}
+                onChange={handleInputChange}
+              />
+              <label className="toggle-password">
+                <input
+                  type="checkbox"
+                  name="showPassword"
+                  checked={form.showPassword}
+                  onChange={handleInputChange}
+                />
+                Show
+              </label>
+            </div>
+            {errors.password && <span className="error-text">{errors.password}</span>}
+          </div>
 
-        <label>PAN No.</label>
-        <input name="pan" value={formData.pan} onChange={handleChange} required />
-        {errors.pan && <span className="error">{errors.pan}</span>}
+          <div className={`input-group ${errors.phone ? 'has-error' : ''}`}>
+            <label>Phone Number</label>
+            <div className="phone-wrapper">
+              <select name="countryCode" value={form.countryCode} onChange={handleInputChange}>
+                <option value="+91">+91 (IN)</option>
+                <option value="+1">+1 (US)</option>
+                <option value="+44">+44 (UK)</option>
+              </select>
+              <input type="tel" name="phone" maxLength="10" value={form.phone} onChange={handleInputChange} />
+            </div>
+            {errors.phone && <span className="error-text">{errors.phone}</span>}
+          </div>
 
-        <label>Aadhar No.</label>
-        <input name="aadhar" value={formData.aadhar} onChange={handleChange} required />
-        {errors.aadhar && <span className="error">{errors.aadhar}</span>}
+          <div className="input-row">
+            <div className={`input-group ${errors.country ? 'has-error' : ''}`}>
+              <label>Country</label>
+              <select name="country" value={form.country} onChange={handleInputChange}>
+                <option value="">Select Country</option>
+                {countryList.map(c => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+              </select>
+              {errors.country && <span className="error-text">{errors.country}</span>}
+            </div>
 
-        <button type="submit">Submit</button>
-      </form>
+            <div className={`input-group ${errors.city ? 'has-error' : ''}`}>
+              <label>City</label>
+              <select
+                name="city"
+                value={form.city}
+                onChange={handleInputChange}
+                disabled={!form.country}
+              >
+                <option value="">Select City</option>
+                {(citiesByCountry[form.country] || []).map(city => (
+                  <option key={city} value={city}>{city}</option>
+                ))}
+              </select>
+              {errors.city && <span className="error-text">{errors.city}</span>}
+            </div>
+          </div>
+
+          <div className="input-row">
+            {["pan", "aadhar"].map(field => (
+              <div key={field} className={`input-group ${errors[field] ? 'has-error' : ''}`}>
+                <label>{field === 'pan' ? 'PAN Number' : 'Aadhar Number'}</label>
+                <input
+                  type="text"
+                  name={field}
+                  value={form[field]}
+                  onChange={handleInputChange}
+                  maxLength={field === 'pan' ? 10 : 12}
+                  placeholder={field === 'pan' ? 'ABCDE1234F' : '123456789012'}
+                />
+                {errors[field] && <span className="error-text">{errors[field]}</span>}
+              </div>
+            ))}
+          </div>
+
+          <button type="submit" className="submit-button">
+            Register
+          </button>
+        </form>
+      </div>
     </div>
   );
 }
+
+export default RegistrationForm;
